@@ -16,12 +16,25 @@ my $cidr_is_new;
 my $whois;
 my $whois_timeout = 15;
 
-#%net = %{retrieve 'my.db'};
-foreach $cidr (keys (%net)) {
-    undef $net{$cidr}{'sum'};
-    undef $net{$cidr}{'addresses'};
+sub load_state {
+    my %state;
+    my $filename = shift;
+    my $cdr;
+    %state = %{retrieve $filename};
+    foreach $cdr (keys (%state)) {
+        undef $state{$cdr}{'sum'};
+        undef $state{$cdr}{'addresses'};
+    }
+    return (%state);
 }
 
+sub save_state {
+    my $state = shift;
+    my $filename = shift;
+    store $state, $filename;
+}
+
+%net = load_state('my.db');
 
 while ($ip = <>) {
     chomp $ip;
@@ -44,9 +57,10 @@ while ($ip = <>) {
                     $net{$cidr}{'state'} = 'unknown';
             }
         }
-
     }
 }
 
+save_state(\%net, 'my.db');
+
 print Dumper(\%net);
-store \%net, 'my.db';
+
