@@ -14,16 +14,21 @@ my $ip;
 my $cidr;
 my $cidr_is_new;
 my $whois;
+
+# Options
+my $state_file;
 my $whois_timeout = 15;
 
 sub load_state {
     my %state;
     my $filename = shift;
     my $cdr;
-    %state = %{retrieve $filename};
-    foreach $cdr (keys (%state)) {
-        undef $state{$cdr}{'sum'};
-        undef $state{$cdr}{'addresses'};
+    if (-e $filename) {
+        %state = %{retrieve $filename};
+        foreach $cdr (keys (%state)) {
+            undef $state{$cdr}{'sum'};
+            undef $state{$cdr}{'addresses'};
+        }
     }
     return (%state);
 }
@@ -34,7 +39,12 @@ sub save_state {
     store $state, $filename;
 }
 
-%net = load_state('my.db');
+GetOptions (
+    'state|s:s' => \$state_file,
+    'whois-timeout|t:i' => \$whois_timeout
+);
+
+%net = load_state($state_file) if ($state_file);
 
 while ($ip = <>) {
     chomp $ip;
@@ -60,7 +70,7 @@ while ($ip = <>) {
     }
 }
 
-save_state(\%net, 'my.db');
+save_state(\%net, $state_file) if ($state_file);
 
 print Dumper(\%net);
 
