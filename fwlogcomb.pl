@@ -7,8 +7,6 @@ use Storable;
 use Net::Whois::IP qw(whoisip_query);
 use Getopt::Long;
 
-use Data::Dumper;
-
 # Globals
 my %net;
 my $ip;
@@ -19,7 +17,6 @@ my $whois;
 # Options
 my $state_file;
 my $whois_timeout = 15;
-
 
 
 sub load_state {
@@ -43,6 +40,14 @@ sub save_state {
     my $filename = shift;
     store $state, $filename;
 }
+
+sub output_net_by_count {
+# Output all non-whitelisted nets sorted by connection count (descending)
+    my $nets = shift;
+    foreach (sort { $nets->{$b}{'sum'} <=> $nets->{$a}{'sum'} } keys %{$nets}) {
+        print "$nets->{$_}{'sum'} - $nets->{$_}{'whois'}{'netname'} ($_)\n" if (not $nets->{$_}{'state'} eq 'whitelist');
+    }
+};
 
 # Read command line options
 GetOptions (
@@ -72,6 +77,7 @@ while ($ip = <>) {
                 $cidr_is_new = 0;
             }
         }
+
         # For new nets
         if ($cidr_is_new) {
             # Lookup whois info online, could be replaced by offline DB
@@ -95,6 +101,5 @@ while ($ip = <>) {
 # Save state if the statefile option was set
 save_state(\%net, $state_file) if ($state_file);
 
-# Dump the hash in lieu of real output
-print Dumper(\%net);
+output_net_by_count(\%net);
 
