@@ -13,6 +13,7 @@ my $ip;
 my $cidr;
 my $cidr_is_new;
 my $whois;
+my @range;
 
 # Options
 my $state_file;
@@ -82,10 +83,16 @@ while ($ip = <>) {
         if ($cidr_is_new) {
             # Lookup whois info online, could be replaced by offline DB
             $whois = whoisip_query($ip) || die "WHOIS error";
+            save_state(\%net, $state_file) if ($state_file);
             sleep $whois_timeout;
 
-            # Calculate the CIDR from the whois inetnum and add whois info
-            foreach $cidr (range2cidr($whois->{'inetnum'})) {
+            # Calculate the CIDR from the whois inetnum/NetRange and add whois info
+            if (defined $whois->{'inetnum'}) { @range = range2cidr($whois->{'inetnum'}) };
+            if (defined $whois->{'NetRange'}) { @range = range2cidr($whois->{'NetRange'}) };
+
+            print "$ip - $range[0]\n";
+
+            foreach $cidr (@range) {
                 foreach (keys(%{$whois}) ) { $net{$cidr}{'whois'}{$_} = $whois->{$_} };
                     # Add the IP occurence
                     $net{$cidr}{'addresses'}{$ip}++;
