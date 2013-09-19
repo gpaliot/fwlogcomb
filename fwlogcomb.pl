@@ -45,8 +45,19 @@ sub save_state {
 sub output_net_by_count {
 # Output all non-whitelisted nets sorted by connection count (descending)
     my $nets = shift;
+    my $netname;
+    my $orgname;
+    my $sum;
     foreach (sort { $nets->{$b}{'sum'} <=> $nets->{$a}{'sum'} } keys %{$nets}) {
-        print "$nets->{$_}{'sum'} - $nets->{$_}{'whois'}{'netname'} ($_)\n" if (not $nets->{$_}{'state'} eq 'whitelist');
+        $netname = '';
+        $orgname = 'Unknown';
+        $sum = 0;
+        $sum = $nets->{$_}{'sum'} if (defined $nets->{$_}{'sum'});
+	    $netname = $nets->{$_}{'whois'}{'netname'} if (defined $nets->{$_}{'whois'}{'netname'});
+	    $netname = $nets->{$_}{'whois'}{'NetName'} if (defined $nets->{$_}{'whois'}{'NetName'});
+	    $orgname = $nets->{$_}{'whois'}{'orgname'} if (defined $nets->{$_}{'whois'}{'orgname'});
+	    $orgname = $nets->{$_}{'whois'}{'OrgName'} if (defined $nets->{$_}{'whois'}{'OrgName'});
+        print "$nets->{$_}{'sum'} - $orgname / $netname ($_)\n" if (not $nets->{$_}{'state'} eq 'whitelist');
     }
 };
 
